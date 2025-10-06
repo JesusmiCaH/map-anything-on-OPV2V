@@ -59,24 +59,22 @@ def carla_pose_to_cam2world(cords, degrees=True, to_opencv_axes=False):
     #   x_cv =  y_carla
     #   y_cv =  z_carla
     #   z_cv =  x_carla
-    C_carla2cv = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]], dtype=float)
-    C_cv2carla = C_carla2cv.T
 
     # Build cam->world rotation with CARLA convention
-    R_carla = euler_matrix(roll, yaw, pitch, degrees=degrees)
+    R_carla = euler_matrix(roll, pitch, yaw, degrees=degrees)
 
     if to_opencv_axes:
         # Transform OpenCV camera to world
         # R_world_cv = R_world_carla * (cv->carla)
-        R = R_carla @ C_cv2carla
+        R = R_carla
     else:
         R = R_carla
 
-    t = np.array([x, y, z], dtype=float).reshape(3, 1)
-
+    t = np.array([y, -z, x], dtype=float).reshape(3, 1)
     T = np.eye(4, dtype=float)
     T[:3, :3] = R
     T[:3, 3] = t.flatten()
+
     return T
 
 

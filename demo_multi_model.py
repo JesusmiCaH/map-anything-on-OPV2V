@@ -51,8 +51,9 @@ DATA ascii
         )
         # Data
         for pt, color in zip(pts3d, rgb):
-            rgb_float = pack_rgb(*color)
-            f.write(f"{pt[0]} {pt[1]} {pt[2]} {rgb_float}\n")
+            # rgb_float = pack_rgb(*color)
+            # f.write(f"{pt[0]} {pt[1]} {pt[2]} {rgb_float}\n")
+            f.write(f"{pt[0]} {pt[1]} {pt[2]}\n")
 
 
 # Get inference device
@@ -67,7 +68,7 @@ with open("demo_config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 imgs, intrinsics, extrinsics = opv2v_data_prepare(
-    "demo_config.yaml", cam_dirs=[0], has_contributer=False
+    "demo_config.yaml", cam_dirs=[0, 1, 3], has_contributer=False
 )
 
 print(len(imgs), len(intrinsics), len(extrinsics))
