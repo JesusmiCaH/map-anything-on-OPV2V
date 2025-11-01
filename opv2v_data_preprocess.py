@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import open3d as o3d
 import yaml
 from PIL import Image
 
@@ -81,6 +82,8 @@ def carla_pose_to_cam2world(cords, degrees=True, to_opencv_axes=False):
 def opv2v_data_prepare(config_file, cam_dirs=[0, 3], has_contributer=True):
     with open(config_file, "r") as f:
         config = yaml.safe_load(f)
+        # get the folder of config_file as the base folder
+        base_folder = os.path.dirname(config_file)
 
     imgs = []
     intrinsics = []
@@ -88,12 +91,12 @@ def opv2v_data_prepare(config_file, cam_dirs=[0, 3], has_contributer=True):
 
     car_list = ["ego", "contributer"] if has_contributer else ["ego"]
 
-    for idx in config["frame_idx"]:
-        for dir in cam_dirs:
-            for car in car_list:
+    pcds = []
+    for i, idx in enumerate(config["frame_idx"]):
+        for car in car_list:
+            for dir in cam_dirs:
                 img_path = os.path.join(
-                    config["data_path"],
-                    config["current_time"],
+                    base_folder,
                     str(config[f"{car}_id"]),
                     f"{idx:06d}_camera{dir}.png",
                 )
@@ -101,10 +104,10 @@ def opv2v_data_prepare(config_file, cam_dirs=[0, 3], has_contributer=True):
                     im = im.convert("RGB")
                     arr = np.array(im, dtype=np.uint8)  # (H,W,3)
                 imgs.append(arr)
+                # print("🌈", car, idx, dir)
                 with open(
                     os.path.join(
-                        config["data_path"],
-                        config["current_time"],
+                        base_folder,
                         str(config[f"{car}_id"]),
                         f"{idx:06d}.yaml",
                     ),
@@ -116,25 +119,60 @@ def opv2v_data_prepare(config_file, cam_dirs=[0, 3], has_contributer=True):
                         carla_pose_to_cam2world(cam_params[f"camera{dir}"]["cords"])
                     )
 
-    return imgs, intrinsics, extrinsics
+        if i == 0:
+            yaml_filename = os.path.join(
+                base_folder,
+                str(config["ego_id"]),
+                f"{config['frame_idx'][i]:06d}.yaml",
+            )
+            with open(yaml_filename, "r") as f:
+                cam_params = yaml.safe_load(f)
+                ext_cam2lidar = cam_params[f"camera{0}"]["extrinsic"]
+
+        pcd_filename = os.path.join(
+            base_folder,
+            str(config["ego_id"]),
+            f"{idx:06d}.pcd",
+        )
+
+        pc = o3d.io.read_point_cloud(pcd_filename)
+        pcd_points = np.asarray(pc.points, dtype=np.float32)
+
+        R_for_gt = np.array(
+            [
+                [0, 1, 0],
+                [0, 0, -1],
+                [1, 0, 0],
+            ],
+            dtype=float,
+        )
+
+        T_for_gt = np.eye(4, dtype=float)
+        T_for_gt[:3, :3] = R_for_gt
+        T_gt2pred = T_for_gt @ ext_cam2lidar
+
+        if pcd_points.size == 0:
+            raise ValueError(f"Empty point cloud: {pcd_filename}")
+
+        # optional: collect per-frame point clouds
+        pcds.append(pcd_points)
+
+    return imgs, intrinsics, extrinsics, pcds, T_gt2pred.astype(np.float32)
 
 
-# Example usage
-example_cords = [
-    141.35067749023438,
-    -388.642578125,
-    1.0410505533218384,
-    0.07589337974786758,
-    174.18048095703125,
-    0.20690691471099854,
-]
+# # Example usage
+# example_cords = [
+#     141.35067749023438,
+#     -388.642578125,
+#     1.0410505533218384,
+#     0.07589337974786758,
+#     174.18048095703125,
+#     0.20690691471099854,
+# ]
 
-T_cam2world_carla_axes = carla_pose_to_cam2world(
-    example_cords, degrees=True, to_opencv_axes=False
-)
-T_cam2world_opencv_axes = carla_pose_to_cam2world(
-    example_cords, degrees=True, to_opencv_axes=True
-)
-
-print("T (cam->world) with CARLA camera axes:\n", T_cam2world_carla_axes)
-print("\nT (cam->world) with OpenCV camera axes:\n", T_cam2world_opencv_axes)
+# T_cam2world_carla_axes = carla_pose_to_cam2world(
+#     example_cords, degrees=True, to_opencv_axes=False
+# )
+# T_cam2world_opencv_axes = carla_pose_to_cam2world(
+#     example_cords, degrees=True, to_opencv_axes=True
+# )

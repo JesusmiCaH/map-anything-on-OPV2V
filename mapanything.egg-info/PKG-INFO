@@ -14,12 +14,10 @@ Requires-Dist: orjson
 Requires-Dist: pillow-heif
 Requires-Dist: plyfile
 Requires-Dist: python-box
+Requires-Dist: rerun-sdk~=0.24.1
 Requires-Dist: safetensors
 Requires-Dist: tensorboard
 Requires-Dist: tqdm
-Requires-Dist: torchaudio
-Requires-Dist: torch~=2.6.0
-Requires-Dist: torchvision
 Requires-Dist: trimesh
 Requires-Dist: uniception
 Provides-Extra: data

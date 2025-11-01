@@ -92,7 +92,6 @@ def generate_demo_config(result, datapath):
 
     # Create config dictionary
     config = {
-        "data_path": "datas/train/",
         "current_time": current_time,
         "ego_id": result["ego_id"],
         "contributer_id": result["other_id"],
@@ -100,12 +99,12 @@ def generate_demo_config(result, datapath):
     }
 
     # Write to demo_config.yaml
-    output_file = "demo_config.yaml"
+    output_file = os.path.join(datapath, "config.yaml")
+
     with open(output_file, "w") as f:
         yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
     print(f"Generated {output_file}:")
-    print(f'data_path: "{config["data_path"]}"')
     print(f'current_time: "{config["current_time"]}"')
     print(f"ego_id: {config['ego_id']}")
     print(f"contributer_id: {config['contributer_id']}")

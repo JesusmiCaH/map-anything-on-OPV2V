@@ -6,12 +6,10 @@ orjson
 pillow-heif
 plyfile
 python-box
+rerun-sdk~=0.24.1
 safetensors
 tensorboard
 tqdm
-torchaudio
-torch~=2.6.0
-torchvision
 trimesh
 uniception
 

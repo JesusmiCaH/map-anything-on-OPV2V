@@ -58,15 +58,15 @@ def main():
         description="Find mutually visible vehicles in an OPV2V data package"
     )
     parser.add_argument(
-        "data_path",
+        "--datapath",
         type=str,
         help="Path to the OPV2V data package (e.g., train/2021_08_16_22_26_54/)",
     )
     args = parser.parse_args()
 
     find_mutual_visibility(
-        args.data_path,
-        output_file=os.path.join(args.data_path, "mutual_visibility.yaml"),
+        args.datapath,
+        output_file=os.path.join(args.datapath, "mutual_visibility.yaml"),
     )
 
 
